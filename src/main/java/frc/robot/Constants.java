@@ -22,7 +22,8 @@ public final class Constants {
   public static PrefDouble kD = new PrefDouble("D", 0);
   public static PrefDouble kV = new PrefDouble("V", 0);
   public enum MotorIDs {
-    Motor1(59),
+    RightIntake(61),
+    LeftIntake(62)
     ;
 
     int id;

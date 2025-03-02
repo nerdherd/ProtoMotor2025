@@ -41,7 +41,7 @@ public class Robot extends TimedRobot {
   public ShuffleboardTab tab = Shuffleboard.getTab("MotorTesting");
   public CommandPS4Controller controller = new CommandPS4Controller(0);
   public double rpm = 0.0;
-  public double max_rpm = 0.05;
+  public double max_rpm = 0.1;
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -103,7 +103,13 @@ public class Robot extends TimedRobot {
       enabled.get(id.id).loadPreferences();
       if (enabled.get(id.id).get() || true) {
         usePID.put(id.id, false);
-        motors.get(id.id).set(rpm); // TODO uh oh
+
+        if(id.id == 61) {
+          motors.get(id.id).set(rpm * 2); // TODO uh oh
+        }
+        if(id.id == 62) {
+          motors.get(id.id).set(rpm); // TODO uh oh
+        }
         // DriverStation.reportWarning("RPM: " + Double.toString(Constants.kRPM.get()), false);
         pidControllers.get(id.id).reset();
         // motors.get(id.id).setControl(velocityRequests.get(id.id));
