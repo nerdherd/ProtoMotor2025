@@ -5,6 +5,7 @@
 package frc.robot;
 
 import java.util.HashMap;
+import java.util.function.DoubleBinaryOperator;
 
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -33,6 +34,7 @@ import frc.robot.util.preferences.PrefBool;
  */
 public class Robot extends TimedRobot {
   public HashMap<Integer, TalonFX> motors = new HashMap<Integer, TalonFX>();
+  public HashMap<Integer, Double> relSpeeds = new HashMap<Integer, Double>();
   public HashMap<Integer, VelocityVoltage> velocityRequests = new HashMap<Integer, VelocityVoltage>();
   public HashMap<Integer, PrefBool> enabled = new HashMap<Integer, PrefBool>();
   public HashMap<Integer, PIDController> pidControllers = new HashMap<Integer, PIDController>();
@@ -59,6 +61,9 @@ public class Robot extends TimedRobot {
       VelocityVoltage velocityRequest = new VelocityVoltage(0.0);
       motor.setControl(velocityRequest);
       motors.put(i, motor);
+
+      relSpeeds.put(i,id.relspeed);
+
       velocityRequests.put(i, velocityRequest);
       PrefBool b = new PrefBool("Motor" + Integer.toString(i), false);
       enabled.put(i, b);
@@ -100,18 +105,22 @@ public class Robot extends TimedRobot {
     Constants.kRPM.loadPreferences();
     // double RPM = 2.0;
     for (Constants.MotorIDs id : Constants.MotorIDs.values()) {
-      enabled.get(id.id).loadPreferences();
-      if (enabled.get(id.id).get() || true) {
-        usePID.put(id.id, false);
+      int i = id.id;
+      enabled.get(i).loadPreferences();
+      if (true || enabled.get(id.id).get()) {
+        usePID.put(i, false);
 
-        if(id.id == 61) {
-          motors.get(id.id).set(rpm * 2); // TODO uh oh
-        }
-        if(id.id == 62) {
-          motors.get(id.id).set(rpm); // TODO uh oh
-        }
+        // if(id.id == 61) {
+        //   motors.get(id.id).set(rpm * 2); // TODO uh oh
+        // }
+        // if(id.id == 62) {
+        //   motors.get(id.id).set(rpm); // TODO uh oh
+        // }
+
+        motors.get(i).set(rpm * relSpeeds.get(i));
+
         // DriverStation.reportWarning("RPM: " + Double.toString(Constants.kRPM.get()), false);
-        pidControllers.get(id.id).reset();
+        pidControllers.get(i).reset();
         // motors.get(id.id).setControl(velocityRequests.get(id.id));
         // if (Math.abs(Constants.kRPM.get()) < 0.01) {
         //   motors.get(id.id).setVoltage(0);

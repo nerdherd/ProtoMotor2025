@@ -22,13 +22,15 @@ public final class Constants {
   public static PrefDouble kD = new PrefDouble("D", 0);
   public static PrefDouble kV = new PrefDouble("V", 0);
   public enum MotorIDs {
-    RightIntake(61),
-    LeftIntake(62)
+    RightIntake(61,1.0),
+    LeftIntake(62,1.0)
     ;
 
     int id;
-    MotorIDs(int _id) {
+    double relspeed; // Relative speed to run at (1 is normal speed)
+    MotorIDs(int _id,double _relspeed) {
       id = _id;
+      relspeed = _relspeed;
     }
   }
 }
