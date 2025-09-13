@@ -21,9 +21,21 @@ public final class Constants {
   public static PrefDouble kI = new PrefDouble("I", 0);
   public static PrefDouble kD = new PrefDouble("D", 0);
   public static PrefDouble kV = new PrefDouble("V", 0);
+  public static PrefDouble kVoltageLow = new PrefDouble("Voltage Low", 2.0);
+  public static PrefDouble kVoltageHigh = new PrefDouble("Voltage High", 2.5); //TODO Voltage
+  public static PrefDouble kVoltageIntervalHigh = new PrefDouble("Voltage Interval High", .1);
+  public static PrefDouble kVoltageIntervalLow = new PrefDouble("Voltage Interval Low", 5);
+
+
   public enum MotorIDs {
-    RightIntake(61,1.0),
-    LeftIntake(62,1.0)
+    Motor1(0,1.0),
+    Motor2(0,1.0),
+    Motor3(0,1.0),
+    Motor4(0,1.0),
+    Motor5(0,1.0),
+    Motor6(0,1.0),
+    Motor7(0,1.0),
+    Motor8(0,1.0),
     ;
 
     int id;

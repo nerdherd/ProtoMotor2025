@@ -17,6 +17,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PS4Controller;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -25,6 +26,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import frc.robot.util.preferences.PrefBool;
+
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -44,6 +46,8 @@ public class Robot extends TimedRobot {
   public CommandPS4Controller controller = new CommandPS4Controller(0);
   public double rpm = 0.0;
   public double max_rpm = 0.1;
+  public boolean voltageEnabled = false;
+  public Timer timer = new Timer();
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -85,12 +89,22 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData("Set Position of Enabled", setPositionsOfEnabledCommand());
     SmartDashboard.putData("Set PID of Enabled", setPIDsOfEnabledCommand());
 
-    controller.cross().onTrue(setRPMsOfEnabledCommand())
-                      .onFalse(stopAllMotorsCommand());
-    controller.R2().onTrue(Commands.runOnce(() -> rpm = max_rpm))
-                      .onFalse(Commands.runOnce(() -> rpm = 0.0));
-    controller.L2().onTrue(Commands.runOnce(() -> rpm = -max_rpm))
-                      .onFalse(Commands.runOnce(() -> rpm = 0.0));
+    // controller.cross().onTrue(setRPMsOfEnabledCommand())
+    //                   .onFalse(stopAllMotorsCommand());
+    // controller.R2().onTrue(Commands.runOnce(() -> rpm = max_rpm))
+    //                   .onFalse(Commands.runOnce(() -> rpm = 0.0));
+    // controller.L2().onTrue(Commands.runOnce(() -> rpm = -max_rpm))
+    //                   .onFalse(Commands.runOnce(() -> rpm = 0.0));
+
+    controller.R2().onTrue(stopAllMotorsCommand());
+    controller.L2().onTrue(Commands.runOnce(() -> {voltageEnabled = !voltageEnabled; timer.restart();}));
+  }
+
+  void setVoltageAll(double volts) {
+    for (Constants.MotorIDs id : Constants.MotorIDs.values()) {
+      motors.get(id.id).setVoltage(volts);
+      usePID.put(id.id, false);
+    }
   }
 
   void stopAllMotors() {
@@ -99,6 +113,8 @@ public class Robot extends TimedRobot {
       motors.get(id.id).setVoltage(0);
       usePID.put(id.id, false);
     }
+    voltageEnabled = false;
+
   }
 
   void setRPMsOfEnabled() {
@@ -107,7 +123,7 @@ public class Robot extends TimedRobot {
     for (Constants.MotorIDs id : Constants.MotorIDs.values()) {
       int i = id.id;
       enabled.get(i).loadPreferences();
-      if (true || enabled.get(id.id).get()) {
+      if (enabled.get(id.id).get()) {
         usePID.put(i, false);
 
         // if(id.id == 61) {
@@ -233,21 +249,38 @@ public class Robot extends TimedRobot {
     
   }
 
+  public boolean isLow = false;
+
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    for (Constants.MotorIDs id : Constants.MotorIDs.values()) {
-      if (usePID.get(id.id)) {
-        double val = pidControllers.get(id.id).calculate(motors.get(id.id).getPosition().getValueAsDouble(), pidPositions.get(id.id));
-        if (val == val) motors.get(id.id).set(val); // checks if val is a number (nan != nan)
-        // motors.get(id.id).setControl(velocityRequests.get(id.id));
-        if (pidControllers.get(id.id).atSetpoint() || (Math.abs(motors.get(id.id).getPosition().getValueAsDouble() - pidPositions.get(id.id)) < 5)) { // TODO configure deadzone
-          usePID.put(id.id, false);
-          velocityRequests.get(id.id).Velocity = 0;
-          motors.get(id.id).setVoltage(0.0);
-        }
+    if (voltageEnabled) {
+      Constants.kVoltageIntervalLow.loadPreferences();
+      if (isLow && timer.advanceIfElapsed(Constants.kVoltageIntervalLow.get())) {
+        isLow = false;
+        Constants.kVoltageHigh.loadPreferences();
+        setVoltageAll(Constants.kVoltageHigh.get());
+      } else if (!isLow && timer.advanceIfElapsed(Constants.kVoltageIntervalHigh.get())) {
+        isLow = true;
+        Constants.kVoltageLow.loadPreferences();
+        setVoltageAll(Constants.kVoltageLow.get());
       }
-    }
+    } 
+
+
+
+    // for (Constants.MotorIDs id : Constants.MotorIDs.values()) {
+    //   if (usePID.get(id.id)) {
+    //     double val = pidControllers.get(id.id).calculate(motors.get(id.id).getPosition().getValueAsDouble(), pidPositions.get(id.id));
+    //     if (val == val) motors.get(id.id).set(val); // checks if val is a number (nan != nan)
+    //     // motors.get(id.id).setControl(velocityRequests.get(id.id));
+    //     if (pidControllers.get(id.id).atSetpoint() || (Math.abs(motors.get(id.id).getPosition().getValueAsDouble() - pidPositions.get(id.id)) < 5)) { // TODO configure deadzone
+    //       usePID.put(id.id, false);
+    //       velocityRequests.get(id.id).Velocity = 0;
+    //       motors.get(id.id).setVoltage(0.0);
+    //     }
+    //   }
+    // }
   }
 
   @Override
